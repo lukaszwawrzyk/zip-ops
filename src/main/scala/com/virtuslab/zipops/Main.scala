@@ -1,9 +1,8 @@
 package com.virtuslab.zipops
 
 import java.io.RandomAccessFile
-import java.nio.channels.Channels
+import java.nio.channels.{ Channels, FileChannel }
 
-import com.google.gson.GsonBuilder
 import net.lingala.zip4j.core.{ HeaderReader, HeaderWriter }
 import net.lingala.zip4j.model.{ ZipModel, FileHeader }
 import java.nio.file._
@@ -12,11 +11,6 @@ import java.util.ArrayList
 import scala.collection.JavaConverters._
 
 object Main extends App {
-
-  val gson = (new GsonBuilder).setPrettyPrinting().create()
-  def prettyPrint(h: Any): String = {
-    gson.toJson(h)
-  }
 
   def printHeader(h: FileHeader): Unit = println {
     s"""Entry(
@@ -81,11 +75,14 @@ object Main extends App {
     // todo use loop (while not all transferred...)
     val fromStart = toChannel.size()
     val fromLength = startOfCentralDir(fromModel)
-    toChannel.transferFrom(fromChannel, /*position =*/ fromStart, /*count = */ fromLength)
+    transferAll(toChannel, fromChannel, fromStart, fromLength)
     fromChannel.close()
 
     val fromHeaders = getHeaders(fromModel)
     fromHeaders.foreach { header =>
+      // potentially offsets should be updated for each header
+      // not only in central directory but a valid extractor
+      // should not rely on that unless jar is corrupted
       val currOffset = header.getOffsetLocalHeader
       val newOffset = currOffset + fromStart
       header.setOffsetLocalHeader(newOffset)
@@ -102,6 +99,16 @@ object Main extends App {
     toChannel.close()
   }
 
+  private def transferAll(to: FileChannel, from: FileChannel, startPos: Long, bytesToTransfer: Long): Unit = {
+    var remaining = bytesToTransfer
+    var offset = startPos
+    while (remaining > 0) {
+      val transferred = to.transferFrom(from, /*position =*/ offset, /*count = */ remaining)
+      offset += transferred
+      remaining -= transferred
+    }
+  }
+
   private def startOfCentralDir(model: ZipModel) = {
     model.getEndCentralDirRecord.getOffsetOfStartOfCentralDir
   }
@@ -112,8 +119,8 @@ object Main extends App {
 //  println("AFTER")
 //  printCentralDir(path)
 
-  val to = getPath("/home/lukasz/dev/test/A.zip", copy = true)
-  val from = getPath("/home/lukasz/dev/test/B.zip", copy = false)
+  val to = getPath("./test/1.zip", copy = true)
+  val from = getPath("./test/2.zip", copy = false)
   println("TO")
   printCentralDir(to)
   println("FROM")

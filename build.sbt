@@ -8,4 +8,3 @@ resolvers += Resolver.sonatypeRepo("snapshots")
 resolvers += Resolver.sonatypeRepo("releases")
 
 libraryDependencies += "net.lingala.zip4j" % "zip4j" % "1.3.2"
-libraryDependencies += "com.google.code.gson" % "gson" % "2.8.5"
