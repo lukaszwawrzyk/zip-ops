@@ -1,10 +1,9 @@
 package org.virtuslab.zipops.bench
 
 import java.io.File
-import java.util.concurrent.TimeUnit.SECONDS
 
 import org.openjdk.jmh.annotations._
-import org.virtuslab.zipops.{ Zip4jZipOps, ZipFsZipOps }
+import org.virtuslab.zipops.ZipOps
 
 class BigJarDeleteBench extends DeleteBenchmark("scala-library-2.12.6.jar") {
 
@@ -45,7 +44,7 @@ class SmallJarDeleteBench extends DeleteBenchmark("scala-xml_2.12-1.0.6.jar") {
 }
 
 @State(Scope.Thread)
-abstract class DeleteBenchmark(jar: String) extends BenchUtil {
+abstract class DeleteBenchmark(jar: String) extends ZipOpsBench with BenchUtil {
 
   var jarFile: File = _
 
@@ -61,23 +60,5 @@ abstract class DeleteBenchmark(jar: String) extends BenchUtil {
     jarFile.delete()
   }
 
-  @Benchmark
-  @Fork(value = 1)
-  @Warmup(iterations = 3, time = 10, timeUnit = SECONDS)
-  @Measurement(iterations = 5, time = 10, timeUnit = SECONDS)
-  @BenchmarkMode(Array(Mode.Throughput))
-  @OutputTimeUnit(SECONDS)
-  def zip4jRemove(): Unit = {
-    Zip4jZipOps.removeEntries(jarFile, toDelete)
-  }
-
-  @Benchmark
-  @Fork(value = 1)
-  @Warmup(iterations = 3, time = 10, timeUnit = SECONDS)
-  @Measurement(iterations = 5, time = 10, timeUnit = SECONDS)
-  @BenchmarkMode(Array(Mode.Throughput))
-  @OutputTimeUnit(SECONDS)
-  def zipfsRemove(): Unit = {
-    ZipFsZipOps.removeEntries(jarFile, toDelete)
-  }
+  override def run(ops: ZipOps): Unit = ops.removeEntries(jarFile, toDelete)
 }
