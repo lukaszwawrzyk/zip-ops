@@ -7,6 +7,8 @@ import java.util.concurrent.TimeUnit.SECONDS
 
 import org.openjdk.jmh.annotations._
 
+class MergeBenchSmall extends MergeBench("scala-xml_2.12-1.0.6.jar", "zip-ops_2.12-0.1.jar")
+
 class MergeBenchBig extends MergeBench("scala-library-2.12.6.jar", "scala-xml_2.12-1.0.6.jar")
 
 @State(Scope.Thread)
