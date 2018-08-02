@@ -7,4 +7,10 @@ scalaVersion := "2.12.5"
 resolvers += Resolver.sonatypeRepo("snapshots")
 resolvers += Resolver.sonatypeRepo("releases")
 
-libraryDependencies += "net.lingala.zip4j" % "zip4j" % "1.3.2"
+libraryDependencies ++= Seq(
+  "net.lingala.zip4j" % "zip4j" % "1.3.2",
+  "org.openjdk.jmh" % "jmh-core" % "1.21",
+  "org.openjdk.jmh" % "jmh-generator-annprocess" % "1.21"
+)
+
+enablePlugins(JmhPlugin)
