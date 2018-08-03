@@ -5,7 +5,7 @@ import java.nio.file.{ Files, StandardCopyOption }
 import java.util.concurrent.TimeUnit.SECONDS
 
 import org.openjdk.jmh.annotations._
-import org.virtuslab.zipops.{ Zip4jZipOps, ZipFsZipOps, ZipOps }
+import org.virtuslab.zipops._
 
 trait ZipOpsBench {
 
@@ -13,8 +13,8 @@ trait ZipOpsBench {
 
   @Benchmark
   @Fork(value = 1)
-  @Warmup(iterations = 10, time = 10, timeUnit = SECONDS)
-  @Measurement(iterations = 15, time = 15, timeUnit = SECONDS)
+  @Warmup(iterations = 5, time = 5, timeUnit = SECONDS)
+  @Measurement(iterations = 10, time = 5, timeUnit = SECONDS)
   @BenchmarkMode(Array(Mode.Throughput))
   @OutputTimeUnit(SECONDS)
   def zip4j(): Unit = {
@@ -23,14 +23,13 @@ trait ZipOpsBench {
 
   @Benchmark
   @Fork(value = 1)
-  @Warmup(iterations = 10, time = 10, timeUnit = SECONDS)
-  @Measurement(iterations = 15, time = 15, timeUnit = SECONDS)
+  @Warmup(iterations = 5, time = 5, timeUnit = SECONDS)
+  @Measurement(iterations = 10, time = 5, timeUnit = SECONDS)
   @BenchmarkMode(Array(Mode.Throughput))
   @OutputTimeUnit(SECONDS)
   def zipfs(): Unit = {
     run(ZipFsZipOps)
   }
-
 
 }
 
