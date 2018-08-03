@@ -2,7 +2,7 @@ package org.virtuslab.zipops
 
 import java.io.{ RandomAccessFile, File }
 
-import net.lingala.zip4j.core.{ HeaderReader, HeaderWriter }
+import net.lingala.zip4j.core.{ HeaderReader, HeaderWriter, EfficientHeaderReader }
 import java.nio.channels.{ FileChannel, Channels }
 import java.nio.file.{ Files, Path }
 import java.util.ArrayList
@@ -10,7 +10,25 @@ import java.util.ArrayList
 import scala.collection.JavaConverters._
 import net.lingala.zip4j.model.{ ZipModel, FileHeader }
 
-object Zip4jZipOps extends ZipOps {
+object Zip4jZipOps extends Zip4jZipOpsBase {
+
+  override protected def readCentralDir(path: Path): CentralDirectory = {
+    val headerReader = new EfficientHeaderReader(path)
+    val centralDir = headerReader.readAllHeaders()
+    headerReader.close()
+    centralDir
+  }
+
+
+}
+
+object Zip4jZipOpsBaseline extends Zip4jZipOpsBase
+
+trait Zip4jZipOpsBase extends ZipOps {
+
+  override def readCentralDirectory(jar: File): Unit = {
+    readCentralDir(jar.toPath)
+  }
 
   override def removeEntries(jarFile: File, classes: Iterable[String]): Unit = {
     removeEntries(jarFile.toPath, classes.toSet)
@@ -20,9 +38,9 @@ object Zip4jZipOps extends ZipOps {
     mergeArchives(into.toPath, from.toPath)
   }
 
-  private type CentralDirectory = ZipModel
+  protected type CentralDirectory = ZipModel
 
-  private  def removeEntries(path: Path, toRemove: Set[String]): Unit = {
+  protected def removeEntries(path: Path, toRemove: Set[String]): Unit = {
     val centralDir = readCentralDir(path)
     removeEntriesFromCentralDir(centralDir, toRemove)
     val file = openFile(path)
@@ -31,14 +49,14 @@ object Zip4jZipOps extends ZipOps {
     finalizeZip(centralDir, file, writeOffset)
   }
 
-  private def removeEntriesFromCentralDir(centralDir: CentralDirectory, toRemove: Set[String]): Unit = {
+  protected def removeEntriesFromCentralDir(centralDir: CentralDirectory, toRemove: Set[String]): Unit = {
     val headers = getHeaders(centralDir)
     val sanitizedToRemove = toRemove.map(_.stripPrefix("/"))
     val clearedHeaders = headers.filterNot(header => sanitizedToRemove.contains(header.getFileName))
     centralDir.getCentralDirectory.setFileHeaders(asArrayList(clearedHeaders))
   }
 
-  private def mergeArchives(target: Path, source: Path): Unit = {
+  protected def mergeArchives(target: Path, source: Path): Unit = {
     val targetCentralDir = readCentralDir(target)
     val sourceCentralDir = readCentralDir(source)
 
@@ -69,7 +87,7 @@ object Zip4jZipOps extends ZipOps {
     Files.delete(source)
   }
 
-  private def mergeHeaders(
+  protected def mergeHeaders(
     targetModel: CentralDirectory,
     sourceModel: CentralDirectory,
     sourceStart: Long
@@ -91,7 +109,7 @@ object Zip4jZipOps extends ZipOps {
     targetHeaders ++ sourceHeaders
   }
 
-  private def readCentralDir(path: Path): CentralDirectory = {
+  protected def readCentralDir(path: Path): CentralDirectory = {
     val file = new RandomAccessFile(path.toFile, "rw")
     val headerReader = new HeaderReader(file)
     val centralDir = headerReader.readAllHeaders()
@@ -99,11 +117,11 @@ object Zip4jZipOps extends ZipOps {
     centralDir
   }
 
-  private def startOfCentralDir(centralDir: CentralDirectory) = {
+  protected def startOfCentralDir(centralDir: CentralDirectory) = {
     centralDir.getEndCentralDirRecord.getOffsetOfStartOfCentralDir
   }
 
-  private def getHeaders(centralDir: CentralDirectory): Seq[FileHeader] = {
+  protected def getHeaders(centralDir: CentralDirectory): Seq[FileHeader] = {
     centralDir.getCentralDirectory.getFileHeaders.asInstanceOf[ArrayList[FileHeader]].asScala
   }
 
@@ -111,7 +129,7 @@ object Zip4jZipOps extends ZipOps {
     channel.truncate(startOfCentralDir(centralDir))
   }
 
-  private def finalizeZip(
+  protected def finalizeZip(
     centralDir: CentralDirectory,
     channel: FileChannel,
     centralDirStart: Long
@@ -122,11 +140,11 @@ object Zip4jZipOps extends ZipOps {
     channel.close()
   }
 
-  private def openFile(path: Path) = {
+  protected def openFile(path: Path): FileChannel = {
     new RandomAccessFile(path.toFile, "rw").getChannel
   }
 
-  private def transferAll(
+  protected def transferAll(
     from: FileChannel,
     to: FileChannel,
     startPos: Long,
@@ -141,7 +159,7 @@ object Zip4jZipOps extends ZipOps {
     }
   }
 
-  private def asArrayList[A](clearedHeaders: Seq[A]): ArrayList[A] = {
+  protected def asArrayList[A](clearedHeaders: Seq[A]): ArrayList[A] = {
     new ArrayList[A](clearedHeaders.asJava)
   }
 

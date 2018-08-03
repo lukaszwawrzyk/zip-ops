@@ -5,7 +5,9 @@ import java.io.File
 import java.nio.file._
 import java.util.function.Consumer
 
-object ZipFsZipOps extends ZipOps {
+object ZipFsZipOps extends ZipFsZipOpsBase
+
+trait ZipFsZipOpsBase extends ZipOps {
 
   def removeEntries(jarFile: File, classes: Iterable[String]): Unit = {
     withZipFs(jarFile) { fs =>
@@ -45,7 +47,7 @@ object ZipFsZipOps extends ZipOps {
     new URI("jar:" + jarFile.toURI.toString)
   }
 
-  private def withZipFs[A](uri: URI, create: Boolean)(action: FileSystem => A): A = {
+  protected def withZipFs[A](uri: URI, create: Boolean)(action: FileSystem => A): A = {
     val env = new java.util.HashMap[String, String]
     if (create) env.put("create", "true")
     val fs = FileSystems.newFileSystem(uri, env)
