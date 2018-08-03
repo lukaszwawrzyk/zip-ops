@@ -1,17 +1,15 @@
 package org.virtuslab.zipops
 
-import java.io.{ RandomAccessFile, File, OutputStream }
+import java.io.{ RandomAccessFile, OutputStream }
 
 import net.lingala.zip4j.core.{ HeaderReader, HeaderWriter, EfficientHeaderReader }
-import java.nio.channels.{ FileChannel, Channels }
-import java.nio.file.{ Files, Path }
+import java.nio.file.Path
 import java.util.ArrayList
 
 import scala.collection.JavaConverters._
 import net.lingala.zip4j.model.{ ZipModel, FileHeader }
-import org.virtuslab.zipops.bench.AbstractZipOps
 
-object Zip4jZipOps extends Zip4jZipOpsBase {
+object Zip4jOps extends Zip4jZipOpsBase {
 
   override protected def readMetadata(path: Path): Metadata = {
     val headerReader = new EfficientHeaderReader(path)
@@ -25,7 +23,7 @@ object Zip4jZipOps extends Zip4jZipOpsBase {
 
 object Zip4jZipOpsBaseline extends Zip4jZipOpsBase
 
-trait Zip4jZipOpsBase extends AbstractZipOps {
+trait Zip4jZipOpsBase extends IndexBasedZipOps {
 
   override type Metadata = ZipModel
   override type Header = FileHeader
@@ -54,8 +52,8 @@ trait Zip4jZipOpsBase extends AbstractZipOps {
 
   protected def getFileName(header: Header): String = header.getFileName
 
-  protected def setFileOffset(header: Header): Long = header.getOffsetLocalHeader
-  protected def getFileOffset(header: Header, offset: Long): Unit = header.setOffsetLocalHeader(offset)
+  protected def getFileOffset(header: Header): Long = header.getOffsetLocalHeader
+  protected def setFileOffset(header: Header, offset: Long): Unit = header.setOffsetLocalHeader(offset)
 
   protected def dumpMetadata(metadata: Metadata, outputStream: OutputStream): Unit = {
     val headerWriter = new HeaderWriter

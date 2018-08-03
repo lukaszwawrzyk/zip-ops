@@ -1,12 +1,10 @@
-package org.virtuslab.zipops.bench
+package org.virtuslab.zipops
 
-import java.io.{ RandomAccessFile, File, OutputStream }
-import java.nio.channels.{ FileChannel, Channels }
+import java.nio.channels.{ FileChannel, Channels, ReadableByteChannel }
+import java.io._
 import java.nio.file.{ Files, Path }
 
-import org.virtuslab.zipops.ZipOps
-
-trait AbstractZipOps extends ZipOps {
+trait IndexBasedZipOps extends ZipOps {
 
   override def readCentralDirectory(jar: File): Unit = {
     readMetadata(jar.toPath)
@@ -26,10 +24,8 @@ trait AbstractZipOps extends ZipOps {
   protected def removeEntries(path: Path, toRemove: Set[String]): Unit = {
     val metadata = readMetadata(path)
     removeEntriesFromMetadata(metadata, toRemove)
-    val file = openFile(path)
-    truncateMetadata(metadata, file)
-    val writeOffset = getCentralDirStart(metadata)
-    finalizeZip(metadata, file, writeOffset)
+    val writeOffset = truncateMetadata(metadata, path)
+    finalizeZip(metadata, path, writeOffset)
   }
 
   protected def removeEntriesFromMetadata(metadata: Metadata, toRemove: Set[String]): Unit = {
@@ -43,16 +39,14 @@ trait AbstractZipOps extends ZipOps {
     val targetMetadata = readMetadata(target)
     val sourceMetadata = readMetadata(source)
 
-    val targetFile = openFile(target)
-    val sourceFile = openFile(source)
-
-    truncateMetadata(targetMetadata, targetFile)
 
     // "source" starts where "target" ends
-    val sourceStart = targetFile.size()
+    val sourceStart = truncateMetadata(targetMetadata, target)
     // "source" is as long as from its beginning till the start of central dir
     val sourceLength = getCentralDirStart(sourceMetadata)
 
+    val sourceFile = openFileForReading(source)
+    val targetFile = openFileForWriting(target)
     transferAll(from = sourceFile, to = targetFile, startPos = sourceStart, bytesToTransfer = sourceLength)
     sourceFile.close()
 
@@ -62,7 +56,7 @@ trait AbstractZipOps extends ZipOps {
     val centralDirStart = sourceStart + sourceLength
     setCentralDirStart(targetMetadata, centralDirStart)
 
-    finalizeZip(targetMetadata, targetFile, centralDirStart)
+    finalizeZip(targetMetadata, target, centralDirStart)
 
     Files.delete(source)
   }
@@ -77,9 +71,9 @@ trait AbstractZipOps extends ZipOps {
       // potentially offsets should be updated for each header
       // not only in central directory but a valid zip tool
       // should not rely on that unless the file is corrupted
-      val currentOffset = setFileOffset(header)
+      val currentOffset = getFileOffset(header)
       val newOffset = currentOffset + sourceStart
-      getFileOffset(header, newOffset)
+      setFileOffset(header, newOffset)
     }
 
     // override files from target with files from source
@@ -89,27 +83,38 @@ trait AbstractZipOps extends ZipOps {
     targetHeaders ++ sourceHeaders
   }
 
-  private def truncateMetadata(metadata: Metadata, channel: FileChannel): FileChannel = {
-    channel.truncate(getCentralDirStart(metadata))
+  private def truncateMetadata(metadata: Metadata, path: Path): Long = {
+    val sizeAfterTruncate = getCentralDirStart(metadata)
+    new FileOutputStream(path.toFile, true)
+      .getChannel
+      .truncate(sizeAfterTruncate)
+      .close()
+    sizeAfterTruncate
   }
 
   protected def finalizeZip(
     metadata: Metadata,
-    channel: FileChannel,
+    path: Path,
     metadataStart: Long
   ): Unit = {
-    val outputStream = Channels.newOutputStream(channel.position(metadataStart))
+    val fileOutputStream = new FileOutputStream(path.toFile)
+    fileOutputStream.getChannel.position(metadataStart)
+    val outputStream = new BufferedOutputStream(fileOutputStream)
     dumpMetadata(metadata, outputStream)
-    channel.close()
+    outputStream.close()
   }
 
 
-  protected def openFile(path: Path): FileChannel = {
-    new RandomAccessFile(path.toFile, "rw").getChannel
+  protected def openFileForReading(path: Path): ReadableByteChannel = {
+    Channels.newChannel(new BufferedInputStream(Files.newInputStream(path)))
+  }
+
+  protected def openFileForWriting(path: Path): FileChannel = {
+    new FileOutputStream(path.toFile, true).getChannel
   }
 
   protected def transferAll(
-    from: FileChannel,
+    from: ReadableByteChannel,
     to: FileChannel,
     startPos: Long,
     bytesToTransfer: Long
@@ -126,15 +131,15 @@ trait AbstractZipOps extends ZipOps {
   protected def readMetadata(path: Path): Metadata
 
   protected def getCentralDirStart(metadata: Metadata): Long
-  protected def setCentralDirStart(targetMetadata: Metadata, centralDirStart: Long): Unit
+  protected def setCentralDirStart(metadata: Metadata, centralDirStart: Long): Unit
 
   protected def getHeaders(metadata: Metadata): Seq[Header]
   protected def setHeaders(metadata: Metadata, headers: Seq[Header]): Unit
 
   protected def getFileName(header: Header): String
 
-  protected def setFileOffset(header: Header): Long
-  protected def getFileOffset(header: Header, offset: Long): Unit
+  protected def getFileOffset(header: Header): Long
+  protected def setFileOffset(header: Header, offset: Long): Unit
 
   protected def dumpMetadata(metadata: Metadata, outputStream: OutputStream): Unit
 

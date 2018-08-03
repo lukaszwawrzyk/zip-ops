@@ -5,9 +5,7 @@ import java.io.File
 import java.nio.file._
 import java.util.function.Consumer
 
-object ZipFsZipOps extends ZipFsZipOpsBase
-
-trait ZipFsZipOpsBase extends ZipOps {
+object ZipFsOps extends ZipOps {
 
   def removeEntries(jarFile: File, classes: Iterable[String]): Unit = {
     withZipFs(jarFile) { fs =>
