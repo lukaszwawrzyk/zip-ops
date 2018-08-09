@@ -5,7 +5,32 @@ import java.io.File
 import java.nio.file._
 import java.util.function.Consumer
 
+import scala.collection.mutable.ListBuffer
+
 object ZipFsOps extends ZipOps {
+
+  override def readPaths(jar: File): Seq[String] = {
+    if (jar.exists()) {
+      withZipFs(jar) { fs =>
+        val list = new ListBuffer[Path]
+        Files
+          .walk(fs.getPath("/"))
+          .forEachOrdered((t: Path) => list += t)
+        list.map(_.toString)
+      }
+    } else Nil
+  }
+
+  override def createStamper(j: File): Stamper = (jar: File, cls: String) => {
+    if (jar.exists()) {
+      withZipFs(jar) { fs =>
+        val path = fs.getPath(cls)
+        if (Files.exists(path)) {
+          Files.getLastModifiedTime(path).toMillis
+        } else 0
+      }
+    } else 0
+  }
 
   def removeEntries(jarFile: File, classes: Iterable[String]): Unit = {
     withZipFs(jarFile) { fs =>

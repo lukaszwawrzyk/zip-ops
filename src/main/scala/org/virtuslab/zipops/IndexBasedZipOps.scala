@@ -6,6 +6,32 @@ import java.nio.file.{ Files, Path }
 
 trait IndexBasedZipOps extends ZipOps {
 
+  override def readPaths(jar: File): Seq[String] = {
+    val metadata = readMetadata(jar.toPath)
+    val headers = getHeaders(metadata)
+    headers.map(getFileName)
+  }
+
+  override def createStamper(outputJar: File): Stamper = new Stamper {
+    private lazy val cachedMetadata: Option[Metadata] = {
+      if (outputJar.exists()) {
+        Some(readMetadata(outputJar.toPath))
+      } else {
+        None
+      }
+    }
+    override def readStamp(jar: File, cls: String): Long = {
+      if (jar == outputJar) {
+        cachedMetadata.flatMap { metadata =>
+          val headers = getHeaders(metadata)
+          headers.find(header => getFileName(header) == cls).map(getLastModifiedTime)
+        }.getOrElse(0L)
+      } else {
+        ??? // read from file
+      }
+    }
+  }
+
   override def readCentralDirectory(jar: File): Unit = {
     readMetadata(jar.toPath)
   }
@@ -49,6 +75,7 @@ trait IndexBasedZipOps extends ZipOps {
     val targetFile = openFileForWriting(target)
     transferAll(from = sourceFile, to = targetFile, startPos = sourceStart, bytesToTransfer = sourceLength)
     sourceFile.close()
+    targetFile.close()
 
     val mergedHeaders = mergeHeaders(targetMetadata, sourceMetadata, sourceStart)
     setHeaders(targetMetadata, mergedHeaders)
@@ -140,6 +167,7 @@ trait IndexBasedZipOps extends ZipOps {
 
   protected def getFileOffset(header: Header): Long
   protected def setFileOffset(header: Header, offset: Long): Unit
+  protected def getLastModifiedTime(header: Header): Long
 
   protected def dumpMetadata(metadata: Metadata, outputStream: OutputStream): Unit
 

@@ -54,6 +54,7 @@ trait Zip4jZipOpsBase extends IndexBasedZipOps {
 
   protected def getFileOffset(header: Header): Long = header.getOffsetLocalHeader
   protected def setFileOffset(header: Header, offset: Long): Unit = header.setOffsetLocalHeader(offset)
+  protected def getLastModifiedTime(header: Header): Long = header.getLastModFileTime
 
   protected def dumpMetadata(metadata: Metadata, outputStream: OutputStream): Unit = {
     val headerWriter = new HeaderWriter

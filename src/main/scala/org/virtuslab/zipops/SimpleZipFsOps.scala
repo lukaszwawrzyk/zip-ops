@@ -28,7 +28,7 @@ object SimpleZipFsOps extends IndexBasedZipOps {
   }
 
   protected def getFileName(header: Header): String = {
-    new String(header.getName)
+    header.getName
   }
 
   protected def getFileOffset(header: Header): Long = {
@@ -37,6 +37,10 @@ object SimpleZipFsOps extends IndexBasedZipOps {
 
   protected def setFileOffset(header: Header, offset: Long): Unit = {
     header.setEntryOffset(offset)
+  }
+
+  protected def getLastModifiedTime(header: Header): Long = {
+    header.mtime
   }
 
   protected def dumpMetadata(metadata: Metadata, outputStream: OutputStream): Unit = {
