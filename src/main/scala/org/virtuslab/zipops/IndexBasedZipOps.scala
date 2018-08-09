@@ -13,19 +13,17 @@ trait IndexBasedZipOps extends ZipOps {
   }
 
   override def createStamper(outputJar: File): Stamper = new Stamper {
-    private lazy val cachedMetadata: Option[Metadata] = {
+    private lazy val cachedMetadata: Map[String, Long] = {
       if (outputJar.exists()) {
-        Some(readMetadata(outputJar.toPath))
+        val metadata = readMetadata(outputJar.toPath)
+        getHeaders(metadata).map(header => getFileName(header) -> getLastModifiedTime(header))(collection.breakOut)
       } else {
-        None
+        Map.empty
       }
     }
     override def readStamp(jar: File, cls: String): Long = {
       if (jar == outputJar) {
-        cachedMetadata.flatMap { metadata =>
-          val headers = getHeaders(metadata)
-          headers.find(header => getFileName(header) == cls).map(getLastModifiedTime)
-        }.getOrElse(0L)
+        cachedMetadata.getOrElse(cls, 0)
       } else {
         ??? // read from file
       }
@@ -64,7 +62,6 @@ trait IndexBasedZipOps extends ZipOps {
   protected def mergeArchives(target: Path, source: Path): Unit = {
     val targetMetadata = readMetadata(target)
     val sourceMetadata = readMetadata(source)
-
 
     // "source" starts where "target" ends
     val sourceStart = truncateMetadata(targetMetadata, target)
