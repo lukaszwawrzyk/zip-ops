@@ -7,7 +7,7 @@ object Main extends BenchUtil {
   private val ops: ZipOps = SimpleZipFsOps
 
   def main(args: Array[String]): Unit = {
-    merge()
+    delete()
   }
 
   private def readCentralDir() = {
@@ -20,6 +20,14 @@ object Main extends BenchUtil {
     val target = copyResource("scala-library-2.12.6.jar")
     val source = copyResource("scala-xml_2.12-1.0.6.jar")
     ops.mergeArchives(target, source)
+    target.delete()
+  }
+
+  private def delete() = {
+    val target = copyResource("zip-ops_2.12-0.1.jar")
+    println(s"Created $target")
+    ops.removeEntries(target, Set("org/virtuslab/zipops/ZipOps.class"))
+    Console.readLine(s"Removed org/virtuslab/zipios/ZipOps.class")
     target.delete()
   }
 }

@@ -97,7 +97,7 @@ trait IndexBasedZipOps extends ZipOps {
     path: Path,
     metadataStart: Long
   ): Unit = {
-    val fileOutputStream = new FileOutputStream(path.toFile)
+    val fileOutputStream = new FileOutputStream(path.toFile, true)
     fileOutputStream.getChannel.position(metadataStart)
     val outputStream = new BufferedOutputStream(fileOutputStream)
     dumpMetadata(metadata, outputStream)
