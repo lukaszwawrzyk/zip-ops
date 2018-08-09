@@ -118,30 +118,6 @@ public class ZipMetadata {
         return elist;
     }
 
-    private Entry getEntry0(byte[] path) throws IOException {
-        IndexNode inode = getInode(path);
-        if (inode instanceof Entry)
-            return (Entry)inode;
-        if (inode == null || inode.pos == -1)
-            return null;
-        return Entry.readCEN(this, inode.pos);
-    }
-
-    private IndexNode getInode(byte[] path) {
-        if (path == null)
-            throw new NullPointerException("path");
-        IndexNode key = IndexNode.keyOf(path);
-        IndexNode inode = inodes.get(key);
-        if (inode == null &&
-                (path.length == 0 || path[path.length -1] != '/')) {
-            // if does not ends with a slash
-            path = Arrays.copyOf(path, path.length + 1);
-            path[path.length - 1] = '/';
-            inode = inodes.get(key.as(path));
-        }
-        return inode;
-    }
-
     // Reads zip file central directory. Returns the file position of first
     // CEN header, otherwise returns -1 if an error occurred. If zip->msg != NULL
     // then the error was a zip format error and zip->msg has the error text.
@@ -295,11 +271,6 @@ public class ZipMetadata {
             return this;
         }
 
-        boolean isDir() {
-            return name != null &&
-                    (name.length == 0 || name[name.length - 1] == '/');
-        }
-
         public boolean equals(Object other) {
             if (!(other instanceof IndexNode)) {
                 return false;
@@ -316,7 +287,7 @@ public class ZipMetadata {
         IndexNode child;  // 1st child
     }
 
-    static void zerror(String msg) {
+    private static void zerror(String msg) {
         throw new ZipError(msg);
     }
 
@@ -370,7 +341,7 @@ public class ZipMetadata {
     // Reads len bytes of data from the specified offset into buf.
     // Returns the total number of bytes read.
     // Each/every byte read from here (except the cen, which is mapped).
-    final long readFullyAt(byte[] buf, int off, long len, long pos) throws IOException
+    private long readFullyAt(byte[] buf, int off, long len, long pos) throws IOException
     {
         ByteBuffer bb = ByteBuffer.wrap(buf);
         bb.position(off);
@@ -378,7 +349,7 @@ public class ZipMetadata {
         return readFullyAt(bb, pos);
     }
 
-    private final long readFullyAt(ByteBuffer bb, long pos) throws IOException
+    private long readFullyAt(ByteBuffer bb, long pos) throws IOException
     {
         return ch.position(pos).read(bb);
     }
@@ -485,46 +456,6 @@ public class ZipMetadata {
         byte[] comment;
 
         Entry() {}
-
-        Entry(byte[] name) {
-            setName(name);
-            this.mtime  = this.ctime = this.atime = System.currentTimeMillis();
-            this.crc    = 0;
-            this.size   = 0;
-            this.csize  = 0;
-            this.method = METHOD_DEFLATED;
-        }
-
-        Entry(byte[] name, int type) {
-            this(name);
-            this.type = type;
-        }
-
-        Entry (Entry e, int type) {
-            setName(e.name);
-            this.version   = e.version;
-            this.ctime     = e.ctime;
-            this.atime     = e.atime;
-            this.mtime     = e.mtime;
-            this.crc       = e.crc;
-            this.size      = e.size;
-            this.csize     = e.csize;
-            this.method    = e.method;
-            this.extra     = e.extra;
-            this.versionMade = e.versionMade;
-            this.disk      = e.disk;
-            this.attrs     = e.attrs;
-            this.attrsEx   = e.attrsEx;
-            this.locoff    = e.locoff;
-            this.comment   = e.comment;
-            this.type      = type;
-        }
-
-        Entry (byte[] name, Path file, int type) {
-            this(name, type);
-            this.file = file;
-            this.method = METHOD_STORED;
-        }
 
         public long getEntryOffset() {
             return locoff;
@@ -698,201 +629,6 @@ public class ZipMetadata {
         }
 
         ///////////////////// LOC //////////////////////
-        static Entry readLOC(ZipMetadata zipfs, long pos)
-                throws IOException
-        {
-            return readLOC(zipfs, pos, new byte[1024]);
-        }
-
-        static Entry readLOC(ZipMetadata zipfs, long pos, byte[] buf)
-                throws IOException
-        {
-            return new Entry().loc(zipfs, pos, buf);
-        }
-
-        Entry loc(ZipMetadata zipfs, long pos, byte[] buf)
-                throws IOException
-        {
-            assert (buf.length >= LOCHDR);
-            if (zipfs.readFullyAt(buf, 0, LOCHDR , pos) != LOCHDR)
-                throw new ZipException("loc: reading failed");
-            if (LOCSIG(buf) != LOCSIG)
-                throw new ZipException("loc: wrong sig ->"
-                        + Long.toString(LOCSIG(buf), 16));
-            //startPos = pos;
-            version  = LOCVER(buf);
-            flag     = LOCFLG(buf);
-            method   = LOCHOW(buf);
-            mtime    = dosToJavaTime(LOCTIM(buf));
-            crc      = LOCCRC(buf);
-            csize    = LOCSIZ(buf);
-            size     = LOCLEN(buf);
-            int nlen = LOCNAM(buf);
-            int elen = LOCEXT(buf);
-
-            name = new byte[nlen];
-            if (zipfs.readFullyAt(name, 0, nlen, pos + LOCHDR) != nlen) {
-                throw new ZipException("loc: name reading failed");
-            }
-            if (elen > 0) {
-                extra = new byte[elen];
-                if (zipfs.readFullyAt(extra, 0, elen, pos + LOCHDR + nlen)
-                        != elen) {
-                    throw new ZipException("loc: ext reading failed");
-                }
-            }
-            pos += (LOCHDR + nlen + elen);
-            if ((flag & FLAG_DATADESCR) != 0) {
-                // Data Descriptor
-                Entry e = zipfs.getEntry0(name);  // get the size/csize from cen
-                if (e == null)
-                    throw new ZipException("loc: name not found in cen");
-                size = e.size;
-                csize = e.csize;
-                pos += (method == METHOD_STORED ? size : csize);
-                if (size >= ZIP64_MINVAL || csize >= ZIP64_MINVAL)
-                    pos += 24;
-                else
-                    pos += 16;
-            } else {
-                if (extra != null &&
-                        (size == ZIP64_MINVAL || csize == ZIP64_MINVAL)) {
-                    // zip64 ext: must include both size and csize
-                    int off = 0;
-                    while (off + 20 < elen) {    // HeaderID+DataSize+Data
-                        int sz = SH(extra, off + 2);
-                        if (SH(extra, off) == EXTID_ZIP64 && sz == 16) {
-                            size = LL(extra, off + 4);
-                            csize = LL(extra, off + 12);
-                            break;
-                        }
-                        off += (sz + 4);
-                    }
-                }
-                pos += (method == METHOD_STORED ? size : csize);
-            }
-            return this;
-        }
-
-        int writeLOC(OutputStream os)
-                throws IOException
-        {
-            writeInt(os, LOCSIG);               // LOC header signature
-            int version = version();
-            int nlen = (name != null) ? name.length : 0;
-            int elen = (extra != null) ? extra.length : 0;
-            boolean foundExtraTime = false;     // if extra timestamp present
-            int eoff = 0;
-            int elen64 = 0;
-            int elenEXTT = 0;
-            int elenNTFS = 0;
-            if ((flag & FLAG_DATADESCR) != 0) {
-                writeShort(os, version());      // version needed to extract
-                writeShort(os, flag);           // general purpose bit flag
-                writeShort(os, method);         // compression method
-                // last modification time
-                writeInt(os, (int)javaToDosTime(mtime));
-                // store size, uncompressed size, and crc-32 in data descriptor
-                // immediately following compressed entry data
-                writeInt(os, 0);
-                writeInt(os, 0);
-                writeInt(os, 0);
-            } else {
-                if (csize >= ZIP64_MINVAL || size >= ZIP64_MINVAL) {
-                    elen64 = 20;    //headid(2) + size(2) + size(8) + csize(8)
-                    writeShort(os, 45);         // ver 4.5 for zip64
-                } else {
-                    writeShort(os, version());  // version needed to extract
-                }
-                writeShort(os, flag);           // general purpose bit flag
-                writeShort(os, method);         // compression method
-                // last modification time
-                writeInt(os, (int)javaToDosTime(mtime));
-                writeInt(os, crc);              // crc-32
-                if (elen64 != 0) {
-                    writeInt(os, ZIP64_MINVAL);
-                    writeInt(os, ZIP64_MINVAL);
-                } else {
-                    writeInt(os, csize);        // compressed size
-                    writeInt(os, size);         // uncompressed size
-                }
-            }
-            while (eoff + 4 < elen) {
-                int tag = SH(extra, eoff);
-                int sz = SH(extra, eoff + 2);
-                if (tag == EXTID_EXTT || tag == EXTID_NTFS) {
-                    foundExtraTime = true;
-                }
-                eoff += (4 + sz);
-            }
-            if (!foundExtraTime) {
-                if (isWindows) {
-                    elenNTFS = 36;              // NTFS, total 36 bytes
-                } else {                        // on unix use "ext time"
-                    elenEXTT = 9;
-                    if (atime != -1)
-                        elenEXTT += 4;
-                    if (ctime != -1)
-                        elenEXTT += 4;
-                }
-            }
-            writeShort(os, name.length);
-            writeShort(os, elen + elen64 + elenNTFS + elenEXTT);
-            writeBytes(os, name);
-            if (elen64 != 0) {
-                writeShort(os, EXTID_ZIP64);
-                writeShort(os, 16);
-                writeLong(os, size);
-                writeLong(os, csize);
-            }
-            if (elenNTFS != 0) {
-                writeShort(os, EXTID_NTFS);
-                writeShort(os, elenNTFS - 4);
-                writeInt(os, 0);            // reserved
-                writeShort(os, 0x0001);     // NTFS attr tag
-                writeShort(os, 24);
-                writeLong(os, javaToWinTime(mtime));
-                writeLong(os, javaToWinTime(atime));
-                writeLong(os, javaToWinTime(ctime));
-            }
-            if (elenEXTT != 0) {
-                writeShort(os, EXTID_EXTT);
-                writeShort(os, elenEXTT - 4);// size for the folowing data block
-                int fbyte = 0x1;
-                if (atime != -1)           // mtime and atime
-                    fbyte |= 0x2;
-                if (ctime != -1)           // mtime, atime and ctime
-                    fbyte |= 0x4;
-                os.write(fbyte);           // flags byte
-                writeInt(os, javaToUnixTime(mtime));
-                if (atime != -1)
-                    writeInt(os, javaToUnixTime(atime));
-                if (ctime != -1)
-                    writeInt(os, javaToUnixTime(ctime));
-            }
-            if (extra != null) {
-                writeBytes(os, extra);
-            }
-            return LOCHDR + name.length + elen + elen64 + elenNTFS + elenEXTT;
-        }
-
-        // Data Descriptior
-        int writeEXT(OutputStream os)
-                throws IOException
-        {
-            writeInt(os, EXTSIG);           // EXT header signature
-            writeInt(os, crc);              // crc-32
-            if (csize >= ZIP64_MINVAL || size >= ZIP64_MINVAL) {
-                writeLong(os, csize);
-                writeLong(os, size);
-                return 24;
-            } else {
-                writeInt(os, csize);        // compressed size
-                writeInt(os, size);         // uncompressed size
-                return 16;
-            }
-        }
-
         // read NTFS, UNIX and ZIP64 data from cen.extra
         void readExtra(ZipMetadata zipfs) throws IOException {
             if (extra == null)
