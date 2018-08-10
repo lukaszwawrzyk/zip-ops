@@ -45,7 +45,7 @@ trait MyZipFsOpsBase extends IndexBasedZipOps {
   }
 
   protected def getLastModifiedTime(header: Header): Long = {
-    header.mtime
+    header.getLastModifiedTime
   }
 
   protected def dumpMetadata(metadata: Metadata, outputStream: OutputStream): Unit = {

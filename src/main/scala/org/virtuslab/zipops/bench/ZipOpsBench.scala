@@ -12,6 +12,10 @@ object ZipOpsBench {
   final val WarmupIterationTime = 20
   final val Iterations = 10
   final val IterationTime = 20
+
+  val BigJar = "scala-library-2.12.6.jar" // 2542 files
+  val MediumJar = "scala-xml_2.12-1.0.6.jar" // 249 files
+  val SmallJar = "zip-ops_2.12-0.1.jar" // 9 files, 3 dirs
 }
 
 trait ZipOpsBench {

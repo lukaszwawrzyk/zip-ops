@@ -461,6 +461,10 @@ public class ZipMetadata {
 
         Entry() {}
 
+        public long getLastModifiedTime() {
+            return mtime;
+        }
+
         public long getEntryOffset() {
             return locoff;
         }

@@ -9,9 +9,10 @@ import java.util.concurrent.TimeUnit.{ SECONDS, MILLISECONDS }
 import ZipOpsBench._
 import org.openjdk.jmh.infra.Blackhole
 import org.virtuslab.zipops.impl.MyZipFsOps
+import sbt.io.IO
 
-class BigJarStamperBenchmark extends StamperBenchmark("scala-library-2.12.6.jar")
-class SmallJarStamperBenchmark extends StamperBenchmark("zip-ops_2.12-0.1.jar")
+class BigJarStamperBenchmark extends StamperBenchmark(BigJar)
+class SmallJarStamperBenchmark extends StamperBenchmark(SmallJar)
 
 @State(Scope.Thread)
 abstract class StamperBenchmark(jar: String) extends ZipOpsBench with BenchUtil {
@@ -24,8 +25,7 @@ abstract class StamperBenchmark(jar: String) extends ZipOpsBench with BenchUtil 
   @Setup(Level.Trial)
   def setup(): Unit = {
     jarFile = copyResource(jar)
-    extractDir = Files.createTempDirectory("lols")
-    extract(jarFile, extractDir)
+    extractDir = extractSomewhere(jarFile)
     inJarPaths = MyZipFsOps.readPaths(jarFile)
     absExtractedPaths = inJarPaths.map(extractDir.resolve).map(_.toAbsolutePath)
   }
@@ -33,7 +33,7 @@ abstract class StamperBenchmark(jar: String) extends ZipOpsBench with BenchUtil 
   @TearDown(Level.Trial)
   def teardown(): Unit = {
     jarFile.delete()
-    // TODO rm extract dir
+    IO.delete(extractDir.toFile)
   }
 
   @Benchmark

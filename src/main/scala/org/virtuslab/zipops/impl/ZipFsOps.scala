@@ -7,9 +7,25 @@ import java.util.function.Consumer
 import java.io.File
 import java.nio.file._
 
+import org.virtuslab.zipops.ZipOps.InZipPath
 import org.virtuslab.zipops.{ Stamper, ZipOps }
 
 object ZipFsOps extends ZipOps {
+
+  override def includeFiles(zip: File, files: Seq[(File, InZipPath)]): Unit = {
+    withZipFs(zip, create = true) { fs =>
+      files.foreach {
+        case (file, target) =>
+          val targetPath = fs.getPath(target)
+          Option(targetPath.getParent).foreach(Files.createDirectories(_))
+          Files.copy(
+            file.toPath,
+            targetPath,
+            StandardCopyOption.REPLACE_EXISTING,
+            StandardCopyOption.COPY_ATTRIBUTES)
+      }
+    }
+  }
 
   override def readPaths(jar: File): Seq[String] = {
     if (jar.exists()) {

@@ -4,8 +4,9 @@ import java.io.File
 
 import org.openjdk.jmh.annotations._
 import org.virtuslab.zipops.ZipOps
+import ZipOpsBench._
 
-class DeleteFromBigJarBench extends DeleteBenchmark("scala-library-2.12.6.jar") {
+class DeleteFromBigJarBench extends DeleteBenchmark(BigJar) {
 
   val toDelete = Set(
     "scala/util/matching/Regex$MatchIterator$$anon$1.class",
@@ -33,7 +34,7 @@ class DeleteFromBigJarBench extends DeleteBenchmark("scala-library-2.12.6.jar") 
 
 }
 
-class SmallJarDeleteBench extends DeleteBenchmark("scala-xml_2.12-1.0.6.jar") {
+class SmallJarDeleteBench extends DeleteBenchmark(MediumJar) {
 
   val toDelete = Set(
     "scala/xml/pull/EvText.class",

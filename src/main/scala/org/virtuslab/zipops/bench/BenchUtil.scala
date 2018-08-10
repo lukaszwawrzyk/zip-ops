@@ -14,7 +14,13 @@ trait BenchUtil {
     tempFile.toFile
   }
 
-  def extract(zip: File, targetDir: Path): Unit = {
+  def extractSomewhere(file: File): Path = {
+    val tempDir = Files.createTempDirectory("lols")
+    extract(file, tempDir)
+    tempDir
+  }
+
+  private def extract(zip: File, targetDir: Path): Unit = {
     new ZipFile(zip).extractAll(targetDir.toString)
   }
 

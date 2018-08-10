@@ -4,7 +4,11 @@ import java.nio.channels.{ FileChannel, Channels, ReadableByteChannel }
 import java.io._
 import java.nio.file.{ Files, Path }
 
+import org.virtuslab.zipops.ZipOps.InZipPath
+
 trait IndexBasedZipOps extends ZipOps {
+
+  override def includeFiles(zip: File, files: Seq[(File, InZipPath)]): Unit = () // noop for now
 
   override def readPaths(jar: File): Seq[String] = {
     val metadata = readMetadata(jar.toPath)
