@@ -1,4 +1,4 @@
-package org.virtuslab.zipops
+package org.virtuslab.zipops.impl
 
 import java.io.{ RandomAccessFile, OutputStream }
 
@@ -8,6 +8,7 @@ import java.util.ArrayList
 
 import scala.collection.JavaConverters._
 import net.lingala.zip4j.model.{ ZipModel, FileHeader }
+import org.virtuslab.zipops.IndexBasedZipOps
 
 object Zip4jOps extends Zip4jZipOpsBase {
 

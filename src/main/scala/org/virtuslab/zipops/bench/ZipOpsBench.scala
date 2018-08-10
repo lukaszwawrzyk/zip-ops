@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit.{ SECONDS, MILLISECONDS }
 import org.virtuslab.zipops._
 import org.openjdk.jmh.annotations._
 import ZipOpsBench._
+import org.virtuslab.zipops.impl.{ ZipFsOps, Zip4jOps, MyZipFsOps }
 
 object ZipOpsBench {
   final val WarmupIterations = 2

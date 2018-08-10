@@ -1,6 +1,8 @@
-package org.virtuslab.zipops
+package org.virtuslab.zipops.main
 
+import org.virtuslab.zipops.ZipOps
 import org.virtuslab.zipops.bench.BenchUtil
+import org.virtuslab.zipops.impl.MyZipFsOps
 
 object Main extends BenchUtil {
 

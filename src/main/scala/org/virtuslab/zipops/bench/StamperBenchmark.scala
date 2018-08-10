@@ -1,12 +1,14 @@
 package org.virtuslab.zipops.bench
 
-import org.virtuslab.zipops.{ MyZipFsOps, ZipOps }
+import org.virtuslab.zipops.ZipOps
 import org.openjdk.jmh.annotations._
 import java.io.File
 import java.nio.file.{ Files, Path }
 import java.util.concurrent.TimeUnit.{ SECONDS, MILLISECONDS }
+
 import ZipOpsBench._
 import org.openjdk.jmh.infra.Blackhole
+import org.virtuslab.zipops.impl.MyZipFsOps
 
 class BigJarStamperBenchmark extends StamperBenchmark("scala-library-2.12.6.jar")
 class SmallJarStamperBenchmark extends StamperBenchmark("zip-ops_2.12-0.1.jar")

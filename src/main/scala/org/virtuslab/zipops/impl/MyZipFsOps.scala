@@ -1,7 +1,9 @@
-package org.virtuslab.zipops
+package org.virtuslab.zipops.impl
 
 import java.io.OutputStream
 import java.nio.file.Path
+
+import org.virtuslab.zipops.{ ZipMetadata, IndexBasedZipOps }
 
 import scala.collection.JavaConverters._
 

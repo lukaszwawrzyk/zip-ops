@@ -1,11 +1,13 @@
-package org.virtuslab.zipops
+package org.virtuslab.zipops.impl
 
 import java.net.URI
-import java.io.File
-import java.nio.file._
-import java.util.function.Consumer
 
 import scala.collection.mutable.ListBuffer
+import java.util.function.Consumer
+import java.io.File
+import java.nio.file._
+
+import org.virtuslab.zipops.{ Stamper, ZipOps }
 
 object ZipFsOps extends ZipOps {
 
