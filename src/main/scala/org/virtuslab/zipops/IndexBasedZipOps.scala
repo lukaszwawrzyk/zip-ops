@@ -13,19 +13,20 @@ trait IndexBasedZipOps extends ZipOps {
   }
 
   override def createStamper(outputJar: File): Stamper = new Stamper {
-    private lazy val cachedMetadata: Map[String, Long] = {
-      if (outputJar.exists()) {
-        val metadata = readMetadata(outputJar.toPath)
+    private var cachedMetadata: Map[String, Long] = _
+    override def readStamp(jar: File, cls: String): Long = {
+      if (cachedMetadata == null) {
+        cachedMetadata = initMetadata(jar)
+      }
+      cachedMetadata.getOrElse(cls, 0)
+    }
+
+    private def initMetadata(jar: File): Map[String, Long] = {
+      if (jar.exists()) {
+        val metadata = readMetadata(jar.toPath)
         getHeaders(metadata).map(header => getFileName(header) -> getLastModifiedTime(header))(collection.breakOut)
       } else {
         Map.empty
-      }
-    }
-    override def readStamp(jar: File, cls: String): Long = {
-      if (jar == outputJar) {
-        cachedMetadata.getOrElse(cls, 0)
-      } else {
-        ??? // read from file
       }
     }
   }

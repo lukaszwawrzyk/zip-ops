@@ -4,7 +4,7 @@ import org.virtuslab.zipops.bench.BenchUtil
 
 object Main extends BenchUtil {
 
-  private val ops: ZipOps = SimpleZipFsOps
+  private val ops: ZipOps = MyZipFsOps
 
   def main(args: Array[String]): Unit = {
     delete()

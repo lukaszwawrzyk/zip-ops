@@ -4,6 +4,14 @@ import java.util.concurrent.TimeUnit.{ SECONDS, MILLISECONDS }
 
 import org.virtuslab.zipops._
 import org.openjdk.jmh.annotations._
+import ZipOpsBench._
+
+object ZipOpsBench {
+  final val WarmupIterations = 2
+  final val WarmupIterationTime = 20
+  final val Iterations = 10
+  final val IterationTime = 20
+}
 
 trait ZipOpsBench {
 
@@ -11,32 +19,32 @@ trait ZipOpsBench {
 
   @Benchmark
   @Fork(value = 1)
-  @Warmup(iterations = 2, time = 5, timeUnit = SECONDS)
-  @Measurement(iterations = 5, time = 20, timeUnit = SECONDS)
+  @Warmup(iterations = WarmupIterations, time = WarmupIterationTime, timeUnit = SECONDS)
+  @Measurement(iterations = Iterations, time = IterationTime, timeUnit = SECONDS)
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(MILLISECONDS)
   def zip4j(): Unit = {
     run(Zip4jOps)
   }
-//
-//  @Benchmark
-//  @Fork(value = 1)
-//  @Warmup(iterations = 2, time = 5, timeUnit = SECONDS)
-//  @Measurement(iterations = 6, time = 5, timeUnit = SECONDS)
-//  @BenchmarkMode(Array(Mode.AverageTime))
-//  @OutputTimeUnit(MILLISECONDS)
-//  def zipfs(): Unit = {
-//    run(ZipFsOps)
-//  }
 
   @Benchmark
   @Fork(value = 1)
-  @Warmup(iterations = 2, time = 5, timeUnit = SECONDS)
-  @Measurement(iterations = 5, time = 20, timeUnit = SECONDS)
+  @Warmup(iterations = WarmupIterations, time = WarmupIterationTime, timeUnit = SECONDS)
+  @Measurement(iterations = Iterations, time = IterationTime, timeUnit = SECONDS)
+  @BenchmarkMode(Array(Mode.AverageTime))
+  @OutputTimeUnit(MILLISECONDS)
+  def zipfs(): Unit = {
+    run(ZipFsOps)
+  }
+
+  @Benchmark
+  @Fork(value = 1)
+  @Warmup(iterations = WarmupIterations, time = WarmupIterationTime, timeUnit = SECONDS)
+  @Measurement(iterations = Iterations, time = IterationTime, timeUnit = SECONDS)
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(MILLISECONDS)
   def myZipfs(): Unit = {
-    run(SimpleZipFsOps)
+    run(MyZipFsOps)
   }
 
 }

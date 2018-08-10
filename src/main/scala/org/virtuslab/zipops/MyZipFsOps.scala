@@ -2,9 +2,12 @@ package org.virtuslab.zipops
 
 import java.io.OutputStream
 import java.nio.file.Path
+
 import scala.collection.JavaConverters._
 
-object SimpleZipFsOps extends IndexBasedZipOps {
+object MyZipFsOps extends MyZipFsOpsBase
+
+trait MyZipFsOpsBase extends IndexBasedZipOps {
   override type Metadata = ZipMetadata
   override type Header = ZipMetadata.Entry
 
