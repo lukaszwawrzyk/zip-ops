@@ -10,7 +10,7 @@ import java.nio.file._
 import org.virtuslab.zipops.ZipOps.InZipPath
 import org.virtuslab.zipops.{ Stamper, ZipOps }
 
-object ZipFsOps extends ZipOps {
+object ZipFsOps extends ZipOps with WithZipFs {
 
   override def includeFiles(zip: File, files: Seq[(File, InZipPath)]): Unit = {
     withZipFs(zip, create = true) { fs =>
@@ -80,15 +80,15 @@ object ZipFsOps extends ZipOps {
     from.delete()
   }
 
-  private def withZipFs[A](file: File, create: Boolean = false)(action: FileSystem => A): A = {
+}
+
+trait WithZipFs {
+
+  def withZipFs[A](file: File, create: Boolean = false)(action: FileSystem => A): A = {
     withZipFs(fileToJarUri(file), create)(action)
   }
 
-  private def fileToJarUri(jarFile: File): URI = {
-    new URI("jar:" + jarFile.toURI.toString)
-  }
-
-  protected def withZipFs[A](uri: URI, create: Boolean)(action: FileSystem => A): A = {
+  def withZipFs[A](uri: URI, create: Boolean)(action: FileSystem => A): A = {
     val env = new java.util.HashMap[String, String]
     if (create) env.put("create", "true")
     val fs = FileSystems.newFileSystem(uri, env)
@@ -98,4 +98,7 @@ object ZipFsOps extends ZipOps {
     }
   }
 
+  private def fileToJarUri(jarFile: File): URI = {
+    new URI("jar:" + jarFile.toURI.toString)
+  }
 }

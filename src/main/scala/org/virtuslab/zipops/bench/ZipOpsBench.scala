@@ -5,13 +5,13 @@ import java.util.concurrent.TimeUnit.{ SECONDS, MILLISECONDS }
 import org.virtuslab.zipops._
 import org.openjdk.jmh.annotations._
 import ZipOpsBench._
-import org.virtuslab.zipops.impl.{ ZipFsOps, Zip4jOps, MyZipFsOps }
+import org.virtuslab.zipops.impl.{ MyZipFsOps, ZipFsOps, Zip4jOps, MyZipOpsZipDifferently }
 
 object ZipOpsBench {
   final val WarmupIterations = 2
-  final val WarmupIterationTime = 20
-  final val Iterations = 10
-  final val IterationTime = 20
+  final val WarmupIterationTime = 5
+  final val Iterations = 8
+  final val IterationTime = 5
 
   val BigJar = "scala-library-2.12.6.jar" // 2542 files
   val MediumJar = "scala-xml_2.12-1.0.6.jar" // 249 files
@@ -28,8 +28,8 @@ trait ZipOpsBench {
   @Measurement(iterations = Iterations, time = IterationTime, timeUnit = SECONDS)
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(MILLISECONDS)
-  def zip4j(): Unit = {
-    run(Zip4jOps)
+  def myzipfs2(): Unit = {
+    run(MyZipOpsZipDifferently)
   }
 
   @Benchmark

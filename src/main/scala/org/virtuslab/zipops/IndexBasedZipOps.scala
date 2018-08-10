@@ -3,12 +3,18 @@ package org.virtuslab.zipops
 import java.nio.channels.{ FileChannel, Channels, ReadableByteChannel }
 import java.io._
 import java.nio.file.{ Files, Path }
+import java.util.UUID
 
 import org.virtuslab.zipops.ZipOps.InZipPath
+import sbt.io.IO
 
 trait IndexBasedZipOps extends ZipOps {
 
-  override def includeFiles(zip: File, files: Seq[(File, InZipPath)]): Unit = () // noop for now
+  override def includeFiles(zip: File, files: Seq[(File, InZipPath)]): Unit = {
+    val tempZip = zip.toPath.resolveSibling(UUID.randomUUID().toString + ".jar").toFile
+    IO.zip(files, tempZip)
+    mergeArchives(zip, tempZip)
+  }
 
   override def readPaths(jar: File): Seq[String] = {
     val metadata = readMetadata(jar.toPath)

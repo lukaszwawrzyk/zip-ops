@@ -1,11 +1,35 @@
 package org.virtuslab.zipops.impl
 
-import java.io.OutputStream
-import java.nio.file.Path
+import java.io.{ File, OutputStream }
+import java.nio.file.{ Files, Path, StandardCopyOption }
+import java.util.UUID
 
+import org.virtuslab.zipops.ZipOps.InZipPath
 import org.virtuslab.zipops.{ ZipMetadata, IndexBasedZipOps }
 
 import scala.collection.JavaConverters._
+
+object MyZipOpsZipDifferently extends MyZipFsOpsBase with WithZipFs {
+
+  override def includeFiles(zip: File, files: Seq[(File, InZipPath)]): Unit = {
+    val tempZip = zip.toPath.resolveSibling(UUID.randomUUID().toString + ".jar").toFile
+
+    zipWithZipFs(tempZip, files)
+
+    mergeArchives(zip, tempZip)
+  }
+
+  // slower than IO.zip
+  private def zipWithZipFs(target: File, files: Seq[(File, InZipPath)]): Unit = {
+    withZipFs(target, create = true) { fs =>
+      files.foreach { case (file, target) =>
+        val targetPath = fs.getPath(target)
+        Option(targetPath.getParent).foreach(Files.createDirectories(_))
+        Files.copy(file.toPath, targetPath, StandardCopyOption.COPY_ATTRIBUTES)
+      }
+    }
+  }
+}
 
 object MyZipFsOps extends MyZipFsOpsBase
 

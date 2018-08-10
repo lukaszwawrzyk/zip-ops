@@ -8,6 +8,8 @@ import ZipOpsBench._
 import org.openjdk.jmh.annotations._
 import sbt.io.{ IO, DirectoryFilter }
 
+class IncludeManyFilesBench extends IncludeFilesBenchmark(zip = BigJar, zipToExtractAndInclude = MediumJar)
+class IncludeSomeFilesInMedJarBench extends IncludeFilesBenchmark(zip = MediumJar, zipToExtractAndInclude = SmallJar)
 class IncludeSomeFilesBench extends IncludeFilesBenchmark(zip = BigJar, zipToExtractAndInclude = SmallJar)
 
 @State(Scope.Thread)
