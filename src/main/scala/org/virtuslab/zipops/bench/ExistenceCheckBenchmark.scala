@@ -67,7 +67,7 @@ abstract class ExistenceCheckBenchmark(jar: String) extends ZipOpsBench with Ben
       names
     }
     paths.foreach(allPaths.contains)
-  }*/
+  }
 
   @Benchmark
   @Fork(value = 1)
