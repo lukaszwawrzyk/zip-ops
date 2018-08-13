@@ -38,7 +38,7 @@ abstract class ExistenceCheckBenchmark(jar: String) extends ZipOpsBench with Ben
   }
 
   override def run(ops: ZipOps): Unit = {
-    val allPaths = ops.readPaths(jarFile)
+    val allPaths = ops.readPaths(jarFile).toSet
     paths.foreach(allPaths.contains)
   }
 
@@ -62,7 +62,7 @@ abstract class ExistenceCheckBenchmark(jar: String) extends ZipOpsBench with Ben
     val allPaths = {
       import scala.collection.JavaConverters._
       val zip = new ZipFile(jarFile)
-      val names = zip.entries().asScala.filterNot(_.isDirectory).map(_.getName)
+      val names = zip.entries().asScala.filterNot(_.isDirectory).map(_.getName).toSet
       zip.close()
       names
     }
