@@ -67,6 +67,27 @@ abstract class ExistenceCheckBenchmark(jar: String) extends ZipOpsBench with Ben
       names
     }
     paths.foreach(allPaths.contains)
+  }*/
+
+  @Benchmark
+  @Fork(value = 1)
+  @Warmup(iterations = WarmupIterations, time = WarmupIterationTime, timeUnit = SECONDS)
+  @Measurement(iterations = Iterations, time = IterationTime, timeUnit = SECONDS)
+  @BenchmarkMode(Array(Mode.AverageTime))
+  @OutputTimeUnit(MILLISECONDS)
+  def zipfileReopen: Unit = {
+    val allPaths = {
+      import scala.collection.JavaConverters._
+      val zip = new ZipFile(jarFile)
+      val names = zip.entries().asScala.filterNot(_.isDirectory).map(_.getName).toSet
+      zip.close()
+      names
+    }
+    paths.foreach { path =>
+      val zip = new ZipFile(jarFile)
+      zip.getEntry(path)
+      zip.close()
+    }
   }
 
 
