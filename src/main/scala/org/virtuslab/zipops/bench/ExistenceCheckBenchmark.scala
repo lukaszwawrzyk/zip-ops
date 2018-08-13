@@ -3,12 +3,13 @@ package org.virtuslab.zipops.bench
 import org.virtuslab.zipops.ZipOps
 import java.io.File
 import java.util.concurrent.TimeUnit.{ SECONDS, MILLISECONDS }
+import java.util.zip.ZipFile
 
 import org.openjdk.jmh.annotations._
-import org.openjdk.jmh.infra.Blackhole
 import org.virtuslab.zipops.ZipOps.InZipPath
 import org.virtuslab.zipops.bench.ZipOpsBench._
 import org.virtuslab.zipops.impl.MyZipFsOps
+import sbt.io.IO
 
 class BigJarExistenceTestBench extends ExistenceCheckBenchmark(BigJar)
 class SmallJarExistenceTestBench extends ExistenceCheckBenchmark(SmallJar)
@@ -33,10 +34,11 @@ abstract class ExistenceCheckBenchmark(jar: String) extends ZipOpsBench with Ben
   @TearDown(Level.Trial)
   def teardown(): Unit = {
     jarFile.delete()
+    IO.delete(extractDir)
   }
 
   override def run(ops: ZipOps): Unit = {
-    val allPaths =ops.readPaths(jarFile)
+    val allPaths = ops.readPaths(jarFile)
     paths.foreach(allPaths.contains)
   }
 
@@ -46,8 +48,26 @@ abstract class ExistenceCheckBenchmark(jar: String) extends ZipOpsBench with Ben
   @Measurement(iterations = Iterations, time = IterationTime, timeUnit = SECONDS)
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(MILLISECONDS)
-  def files(hole: Blackhole): Unit = {
+  def files: Unit = {
     extractedFiles.foreach(_.exists())
   }
+
+  @Benchmark
+  @Fork(value = 1)
+  @Warmup(iterations = WarmupIterations, time = WarmupIterationTime, timeUnit = SECONDS)
+  @Measurement(iterations = Iterations, time = IterationTime, timeUnit = SECONDS)
+  @BenchmarkMode(Array(Mode.AverageTime))
+  @OutputTimeUnit(MILLISECONDS)
+  def zipfile: Unit = {
+    val allPaths = {
+      import scala.collection.JavaConverters._
+      val zip = new ZipFile(jarFile)
+      val names = zip.entries().asScala.filterNot(_.isDirectory).map(_.getName)
+      zip.close()
+      names
+    }
+    paths.foreach(allPaths.contains)
+  }
+
 
 }

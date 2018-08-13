@@ -59,16 +59,6 @@ trait ZipOpsBench {
   @Measurement(iterations = Iterations, time = IterationTime, timeUnit = SECONDS)
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(MILLISECONDS)
-  def zip4j(): Unit = {
-    run(Zip4jOps)
-  }
-
-  @Benchmark
-  @Fork(value = 1)
-  @Warmup(iterations = WarmupIterations, time = WarmupIterationTime, timeUnit = SECONDS)
-  @Measurement(iterations = Iterations, time = IterationTime, timeUnit = SECONDS)
-  @BenchmarkMode(Array(Mode.AverageTime))
-  @OutputTimeUnit(MILLISECONDS)
   def zipfs(): Unit = {
     run(ZipFsOps)
   }
