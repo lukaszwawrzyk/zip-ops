@@ -36,7 +36,7 @@ abstract class CentralDirBenchmark(jar: String) extends ZipOpsBench with BenchUt
   def zipfile(): Unit = {
     import scala.collection.JavaConverters._
     val zip = new ZipFile(jarFile)
-    val names = zip.entries().asScala.filterNot(_.isDirectory).map(_.getName)
+    val names = zip.entries().asScala.filterNot(_.isDirectory).map(_.getName).toSet
     zip.close()
   }
 
