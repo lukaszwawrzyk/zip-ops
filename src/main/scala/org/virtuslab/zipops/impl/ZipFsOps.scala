@@ -36,15 +36,13 @@ object ZipFsOps extends ZipOps with WithZipFs {
   }
 
   override def readPaths(jar: File): Seq[String] = {
-    if (jar.exists()) {
-      withZipFs(jar) { fs =>
-        val list = new ListBuffer[Path]
-        Files
-          .walk(fs.getPath("/"))
-          .forEachOrdered((t: Path) => list += t)
-        list.map(_.toString)
-      }
-    } else Nil
+    withZipFs(jar) { fs =>
+      val list = new ListBuffer[Path]
+      Files
+        .walk(fs.getPath("/"))
+        .forEachOrdered((t: Path) => list += t)
+      list.map(_.toString)
+    }
   }
 
   override def createStamper(j: File): Stamper = (jar: File, cls: String) => {

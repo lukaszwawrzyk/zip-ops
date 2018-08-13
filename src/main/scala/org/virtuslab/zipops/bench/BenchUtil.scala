@@ -4,8 +4,20 @@ import java.io.File
 import java.nio.file.{ Files, StandardCopyOption, Path }
 
 import net.lingala.zip4j.core.ZipFile
+import sbt.io.{ IO, DirectoryFilter }
 
 trait BenchUtil {
+
+  def dirContent(dir: File): Seq[(File, String)] = {
+    import sbt.io.syntax._
+    (dir ** -DirectoryFilter).get.flatMap { extractedFile =>
+      IO.relativize(dir, extractedFile) match {
+        case Some(relPath) =>
+          List((extractedFile, relPath))
+        case _ => Nil
+      }
+    }
+  }
 
   def copyResource(name: String): File = {
     val resource = getClass.getResourceAsStream(s"/$name")
@@ -23,5 +35,6 @@ trait BenchUtil {
   private def extract(zip: File, targetDir: Path): Unit = {
     new ZipFile(zip).extractAll(targetDir.toString)
   }
+
 
 }

@@ -31,17 +31,6 @@ abstract class IncludeFilesBenchmark(
     extractedFiles = dirContent(extractDir)
   }
 
-  private def dirContent(dir: File): Seq[(File, String)] = {
-    import sbt.io.syntax._
-    (dir ** -DirectoryFilter).get.flatMap { extractedFile =>
-      IO.relativize(dir, extractedFile) match {
-        case Some(relPath) =>
-          List((extractedFile, relPath))
-        case _ => Nil
-      }
-    }
-  }
-
   @TearDown(Level.Invocation)
   def teardown(): Unit = {
     zipFile.delete()
