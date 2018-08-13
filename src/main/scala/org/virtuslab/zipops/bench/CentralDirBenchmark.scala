@@ -12,12 +12,12 @@ abstract class CentralDirBenchmark(jar: String) extends ZipOpsBench with BenchUt
 
   var jarFile: File = _
 
-  @Setup(Level.Invocation)
+  @Setup(Level.Trial)
   def setup(): Unit = {
     jarFile = copyResource(jar)
   }
 
-  @TearDown(Level.Invocation)
+  @TearDown(Level.Trial)
   def teardown(): Unit = {
     jarFile.delete()
   }

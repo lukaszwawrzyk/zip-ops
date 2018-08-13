@@ -9,6 +9,7 @@ import org.virtuslab.zipops.bench.ZipOpsBench._
 import org.virtuslab.zipops.impl.MyZipFsOps
 
 class BigJarFileVsIndexStashBench extends FileVsIndexStashBench(BigJar)
+class MediumJarFileVsIndexStashBench extends FileVsIndexStashBench(MediumJar)
 
 @State(Scope.Thread)
 abstract class FileVsIndexStashBench(jar: String) extends BenchUtil {

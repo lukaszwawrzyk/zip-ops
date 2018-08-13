@@ -6,11 +6,19 @@ import scala.collection.mutable.ListBuffer
 import java.util.function.Consumer
 import java.io.File
 import java.nio.file._
+import java.util.stream.Collectors
 
 import org.virtuslab.zipops.ZipOps.InZipPath
 import org.virtuslab.zipops.{ Stamper, ZipOps }
+import scala.collection.JavaConverters._
 
 object ZipFsOps extends ZipOps with WithZipFs {
+
+  override def readCentralDirectory(jar: File): Unit = {
+    withZipFs(jar) { fs =>
+      Files.walk(fs.getPath("/")).collect(Collectors.toList[Path]).asScala
+    }
+  }
 
   override def includeFiles(zip: File, files: Seq[(File, InZipPath)]): Unit = {
     withZipFs(zip, create = true) { fs =>

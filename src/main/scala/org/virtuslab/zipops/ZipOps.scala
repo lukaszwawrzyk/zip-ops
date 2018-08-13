@@ -12,7 +12,7 @@ object ZipOps {
 trait ZipOps {
   def readPaths(jar: File): Seq[InZipPath]
   def createStamper(jar: File): Stamper
-  def readCentralDirectory(jar: File): Unit = ()
+  def readCentralDirectory(jar: File): Unit
   def removeEntries(jarFile: File, classes: Iterable[InZipPath]): Unit
   def mergeArchives(into: File, from: File): Unit
   def includeFiles(zip: File, files: Seq[(File, InZipPath)])
