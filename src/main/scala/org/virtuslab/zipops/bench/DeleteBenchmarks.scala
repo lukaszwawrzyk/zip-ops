@@ -6,50 +6,14 @@ import org.openjdk.jmh.annotations._
 import org.virtuslab.zipops.ZipOps
 import ZipOpsBench._
 
-class DeleteFromBigJarBench extends DeleteBenchmark(BigJar) {
+class DeleteFromBigJarBench extends DeleteBenchmark(BigJar, FilesInBigJar)
 
-  val toDelete = Set(
-    "scala/util/matching/Regex$MatchIterator$$anon$1.class",
-    "scala/sys/process/ProcessIO.class",
-    "scala/runtime/VolatileShortRef.class",
-    "scala/math/Equiv.class",
-    "scala/Array$.class",
-    "scala/Array.class",
-    "scala/Boolean$.class",
-    "scala/Boolean.class",
-    "scala/Byte$.class",
-    "scala/Byte.class",
-    "scala/Char$.class",
-    "scala/Char.class",
-    "scala/Cloneable.class",
-    "scala/Console$.class",
-    "scala/Console.class",
-    "scala/DelayedInit.class",
-    "scala/DeprecatedConsole.class",
-    "scala/DeprecatedPredef.class",
-    "scala/Double$.class",
-    "scala/Double.class",
-    "scala/Dynamic.class"
-  )
-
-}
-
-class SmallJarDeleteBench extends DeleteBenchmark(MediumJar) {
-
-  val toDelete = Set(
-    "scala/xml/pull/EvText.class",
-    "scala/xml/dtd/ExtDef.class",
-    "scala/xml/Atom.class"
-  )
-
-}
+class SmallJarDeleteBench extends DeleteBenchmark(MediumJar, FilesInMediumJar)
 
 @State(Scope.Thread)
-abstract class DeleteBenchmark(jar: String) extends ZipOpsBench with BenchUtil {
+abstract class DeleteBenchmark(jar: String, toDelete: Set[String]) extends ZipOpsBench with BenchUtil {
 
   var jarFile: File = _
-
-  val toDelete: Set[String]
 
   @Setup(Level.Invocation)
   def setup(): Unit = {

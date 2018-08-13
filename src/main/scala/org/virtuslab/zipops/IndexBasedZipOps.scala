@@ -6,13 +6,23 @@ import java.nio.file.{ Files, Path }
 import java.util.UUID
 
 import org.virtuslab.zipops.ZipOps.InZipPath
-import sbt.io.IO
 
 trait IndexBasedZipOps extends ZipOps {
 
+  def stashIndex(path: Path): Metadata = {
+    readMetadata(path)
+  }
+
+  def unstashIndex(stashedMetadata: Metadata, path: Path): Unit = {
+    val currentMetadata = readMetadata(path)
+    val writeOffset = truncateMetadata(currentMetadata, path)
+    setCentralDirStart(stashedMetadata, writeOffset)
+    finalizeZip(stashedMetadata, path, writeOffset)
+  }
+
   override def includeFiles(zip: File, files: Seq[(File, InZipPath)]): Unit = {
     val tempZip = zip.toPath.resolveSibling(UUID.randomUUID().toString + ".jar").toFile
-    IO.zip(files, tempZip)
+    CreateZip.usingOptimizedSbtIo(tempZip, files)
     mergeArchives(zip, tempZip)
   }
 

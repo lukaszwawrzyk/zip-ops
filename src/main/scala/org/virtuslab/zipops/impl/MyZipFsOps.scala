@@ -1,23 +1,11 @@
 package org.virtuslab.zipops.impl
 
-import java.io.{ File, OutputStream }
+import java.io.OutputStream
 import java.nio.file.Path
-import java.util.UUID
 
-import org.virtuslab.zipops.ZipOps.InZipPath
-import org.virtuslab.zipops.{ ZipMetadata, CreateZip, IndexBasedZipOps }
+import org.virtuslab.zipops.{ ZipMetadata, IndexBasedZipOps }
 
 import scala.collection.JavaConverters._
-
-object MyZipOpsZipDifferently extends MyZipFsOpsBase with WithZipFs {
-
-  override def includeFiles(zip: File, files: Seq[(File, InZipPath)]): Unit = {
-    val tempZip = zip.toPath.resolveSibling(UUID.randomUUID().toString + ".jar").toFile
-    CreateZip.usingOptimizedSbtIo(tempZip, files)
-    mergeArchives(zip, tempZip)
-  }
-
-}
 
 object MyZipFsOps extends MyZipFsOpsBase
 
